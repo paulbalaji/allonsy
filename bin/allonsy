@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Download the best available video and audio streams without transcoding."""
+
+from __future__ import annotations
+
+import argparse
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+
+VERSION = "1.0.0"
+
+
+def executable(
+    name: str, preferred: tuple[Path, ...] = (), *, search_path: bool = True
+) -> str:
+    for candidate in preferred:
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    if search_path:
+        found = shutil.which(name)
+        if found:
+            return found
+    raise SystemExit(
+        f"Missing required program: {name}. Run the Allonsy installer again."
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Download the maximum-quality video and audio streams and losslessly "
+            "mux them into an MKV file."
+        )
+    )
+    parser.add_argument("urls", nargs="+", help="video URL(s)")
+    parser.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        default=Path.home() / "Movies",
+        help="destination directory (default: ~/Movies)",
+    )
+    parser.add_argument("--version", action="version", version=f"Allonsy {VERSION}")
+    args = parser.parse_args()
+
+    yt_dlp = executable(
+        "yt-dlp", (Path.home() / ".local" / "bin" / "yt-dlp",)
+    )
+    ffmpeg = executable(
+        "ffmpeg",
+        (Path("/opt/homebrew/bin/ffmpeg"), Path("/usr/local/bin/ffmpeg")),
+    )
+
+    output_dir = args.output_dir.expanduser().resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    command = [
+        yt_dlp,
+        "--ignore-config",
+        "--no-plugin-dirs",
+        "--no-playlist",
+        "--continue",
+        "--no-overwrites",
+        "--no-post-overwrites",
+        "--check-formats",
+        "--merge-output-format",
+        "mkv",
+        "--remux-video",
+        "mkv",
+        "--embed-metadata",
+        "--embed-chapters",
+        "--ffmpeg-location",
+        ffmpeg,
+        "--format",
+        "bestvideo+bestaudio/best",
+        "--output",
+        str(output_dir / "%(title)s [%(id)s].%(ext)s"),
+    ]
+
+    deno = executable(
+        "deno",
+        (Path("/opt/homebrew/bin/deno"), Path("/usr/local/bin/deno")),
+        search_path=False,
+    )
+    command.extend(("--js-runtimes", f"deno:{deno}"))
+
+    # Prevent a URL beginning with '-' from becoming an injected yt-dlp option.
+    command.append("--")
+    command.extend(args.urls)
+    print(f"Allons-y! Saving maximum-quality media to {output_dir}", flush=True)
+
+    allowed_environment = {
+        "HOME",
+        "PATH",
+        "TMPDIR",
+        "TMP",
+        "TEMP",
+        "LANG",
+        "LC_ALL",
+        "SSL_CERT_FILE",
+        "REQUESTS_CA_BUNDLE",
+        "CURL_CA_BUNDLE",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "ALL_PROXY",
+        "NO_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "all_proxy",
+        "no_proxy",
+    }
+    environment = {
+        key: value for key, value in os.environ.items() if key in allowed_environment
+    }
+    return subprocess.run(command, env=environment, check=False).returncode
+
+
+if __name__ == "__main__":
+    sys.exit(main())
