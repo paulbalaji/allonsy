@@ -16,23 +16,29 @@ else
 fi
 
 echo "Installing runtime dependencies..."
-"$brew_cmd" install ffmpeg deno pipx
+"$brew_cmd" install ffmpeg deno uv
 
 brew_prefix="$("$brew_cmd" --prefix)"
-pipx_cmd="$brew_prefix/bin/pipx"
+uv_cmd="$brew_prefix/bin/uv"
 install_dir="$HOME/.local/bin"
-export PIPX_BIN_DIR="$install_dir"
 
-if "$pipx_cmd" list --short 2>/dev/null | grep -q '^yt-dlp '; then
-  if "$pipx_cmd" runpip yt-dlp show yt-dlp-ejs >/dev/null 2>&1; then
-    "$pipx_cmd" upgrade yt-dlp
-  else
-    # Migrate older minimal installs to yt-dlp's recommended dependency set.
-    "$pipx_cmd" install --force 'yt-dlp[default]'
-  fi
-else
-  "$pipx_cmd" install 'yt-dlp[default]'
-fi
+# Ignore ambient uv configuration and index variables so installation always
+# resolves from PyPI. --force replaces the command without deleting its previous
+# package-manager environment.
+uv_environment=(
+  env -i
+  "HOME=$HOME"
+  "PATH=/usr/bin:/bin:/usr/sbin:/sbin"
+  "TMPDIR=${TMPDIR:-/tmp}"
+  "UV_TOOL_BIN_DIR=$install_dir"
+)
+"${uv_environment[@]}" "$uv_cmd" tool install \
+  --force \
+  --no-config \
+  --default-index https://pypi.org/simple \
+  --managed-python \
+  --python 3.13 \
+  'yt-dlp[default]'
 
 mkdir -p "$install_dir"
 script_dir="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)"
@@ -56,9 +62,10 @@ esac
 
 echo
 "$install_dir/allonsy" --version
-"$install_dir/yt-dlp" --version
+"${uv_environment[@]}" "$install_dir/yt-dlp" --version
 "$brew_prefix/bin/ffmpeg" -version >/dev/null
 "$brew_prefix/bin/deno" --version >/dev/null
-"$pipx_cmd" runpip yt-dlp show yt-dlp-ejs >/dev/null
+yt_dlp_python="$("${uv_environment[@]}" "$uv_cmd" tool dir --no-config)/yt-dlp/bin/python"
+"${uv_environment[@]}" "$yt_dlp_python" -I -c 'import yt_dlp_ejs'
 echo "Installed successfully. Open a new terminal, then run:"
-echo "  allonsy 'https://youtu.be/VIDEO_ID'"
+echo "  allonsy VIDEO_ID"

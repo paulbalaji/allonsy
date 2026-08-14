@@ -13,7 +13,7 @@ French phrase *allons-y* ("let's go"); this project uses no third-party logos,
 artwork, characters, or other brand assets.
 
 ```shell
-allonsy 'https://youtu.be/VIDEO_ID'
+allonsy VIDEO_ID
 ```
 
 Files are saved to `~/Movies` by default.
@@ -50,7 +50,7 @@ For playback, use VLC, IINA, or another player that supports MKV/VP9/Opus.
 
 The installer supplies the remaining dependencies:
 
-- `yt-dlp` via `pipx`
+- `yt-dlp` and a managed Python 3.13 runtime via `uv`
 - FFmpeg and `ffprobe`
 - Deno, used by `yt-dlp` for YouTube's JavaScript challenges
 
@@ -79,9 +79,17 @@ let it perform and verify the setup.
 Download one or more individual videos:
 
 ```shell
-allonsy 'https://youtu.be/VIDEO_ID'
-allonsy 'URL_ONE' 'URL_TWO'
+allonsy hHAziowW_Vg
+allonsy https://youtu.be/hHAziowW_Vg
+allonsy URL_ONE URL_TWO
 ```
+
+A bare 11-character YouTube video ID or clean `youtu.be/VIDEO_ID` URL needs no
+quotes. Shared URLs containing `?`, `&`, or other shell metacharacters must
+still be quoted because zsh interprets them before Allonsy starts. The tracking
+query is unnecessary, so copying only the video ID is the simplest option.
+For the rare valid video ID beginning with `-`, separate it from Allonsy's
+options: `allonsy -- -ABCDEFGHIJ`.
 
 Choose another destination:
 
@@ -104,12 +112,14 @@ The installer also upgrades `yt-dlp` when it is already installed.
 
 ## Dependency and supply-chain model
 
-Allonsy does not bundle `yt-dlp`, FFmpeg, Deno, Python, or Homebrew. The
-installer fetches current releases from Homebrew and PyPI at installation time;
-these versions are intentionally not pinned because video extractors require
-frequent compatibility and security updates. This improves freshness but means
-installs are not bit-for-bit reproducible and inherit the trust and availability
-of Homebrew, PyPI, `pipx`, and their transitive dependencies.
+Allonsy does not bundle `yt-dlp`, FFmpeg, Deno, Python, uv, or Homebrew. The
+installer fetches current releases from Homebrew and PyPI at installation time.
+uv also fetches a managed Python 3.13 runtime built by Astral's
+`python-build-standalone` project. Dependency patch versions are intentionally
+not pinned because video extractors require frequent compatibility and security
+updates. This improves freshness but means installs are not bit-for-bit
+reproducible and inherit the trust and availability of Homebrew, PyPI, uv,
+Astral's Python distributions, and their transitive dependencies.
 
 Review `install.sh` before running it. For a controlled environment, install
 audited dependency versions yourself and copy `bin/allonsy` into a directory on

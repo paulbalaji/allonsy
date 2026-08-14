@@ -14,6 +14,6 @@ private vulnerability reporting from the repository's **Security** tab:
 
 Include the affected version or commit, operating system, reproduction steps,
 impact, and any suggested remediation. Reports concerning `yt-dlp`, FFmpeg,
-Deno, Homebrew, or `pipx` themselves should be sent to the relevant upstream
+Deno, Homebrew, or uv themselves should be sent to the relevant upstream
 project; please still report an Allonsy-specific unsafe integration or default.
 Please allow time for a fix before publishing details.

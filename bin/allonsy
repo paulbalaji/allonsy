@@ -6,12 +6,15 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
 
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
+
+YOUTUBE_VIDEO_ID = re.compile(r"^[A-Za-z0-9_-]{11}$")
 
 
 def executable(
@@ -29,6 +32,13 @@ def executable(
     )
 
 
+def normalize_source(source: str) -> str:
+    """Turn a bare YouTube video ID into a shell-friendly clean URL."""
+    if YOUTUBE_VIDEO_ID.fullmatch(source):
+        return f"https://youtu.be/{source}"
+    return source
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -36,7 +46,9 @@ def main() -> int:
             "mux them into an MKV file."
         )
     )
-    parser.add_argument("urls", nargs="+", help="video URL(s)")
+    parser.add_argument(
+        "urls", nargs="+", help="video URL(s) or YouTube video ID(s)"
+    )
     parser.add_argument(
         "-o",
         "--output-dir",
@@ -90,7 +102,7 @@ def main() -> int:
 
     # Prevent a URL beginning with '-' from becoming an injected yt-dlp option.
     command.append("--")
-    command.extend(args.urls)
+    command.extend(normalize_source(source) for source in args.urls)
     print(f"Allons-y! Saving maximum-quality media to {output_dir}", flush=True)
 
     allowed_environment = {
