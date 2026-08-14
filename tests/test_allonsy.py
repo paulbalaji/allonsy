@@ -78,6 +78,16 @@ class AllonsyTests(unittest.TestCase):
                 self.allonsy.executable("tool", (preferred,), search_path=False)
             which.assert_not_called()
 
+    def test_bare_youtube_id_becomes_clean_url(self) -> None:
+        self.assertEqual(
+            self.allonsy.normalize_source("hHAziowW_Vg"),
+            "https://youtu.be/hHAziowW_Vg",
+        )
+        self.assertEqual(
+            self.allonsy.normalize_source("https://youtu.be/hHAziowW_Vg"),
+            "https://youtu.be/hHAziowW_Vg",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
