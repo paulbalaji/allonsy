@@ -71,8 +71,23 @@ Open a new terminal after installation and verify it:
 allonsy --version
 ```
 
-Alternatively, paste [`SETUP_WITH_CODEX.md`](SETUP_WITH_CODEX.md) into Codex and
-let it perform and verify the setup.
+## Install with an LLM
+
+Copy this prompt into Codex or another coding agent:
+
+```text
+Set up Allonsy on this Mac from https://github.com/paulbalaji/allonsy.
+
+Please do the work, not just describe it. Read the repository's README,
+SETUP_WITH_CODEX.md, and install.sh first. Clone or safely update the repository,
+preserving local changes; run the installer; then verify Allonsy, yt-dlp,
+yt-dlp-ejs, FFmpeg, Deno, and a fresh login shell. Do not download a test video
+unless I provide a URL. Report installed paths, versions, checks performed, and
+any remaining manual steps.
+```
+
+[`SETUP_WITH_CODEX.md`](SETUP_WITH_CODEX.md) contains the complete checklist the
+agent will follow.
 
 ## Usage
 
